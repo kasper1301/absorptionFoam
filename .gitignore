@@ -1,0 +1,5 @@
+*.dep
+Make/linux64GccDPOpt/
+*.log
+*.o
+*.so
