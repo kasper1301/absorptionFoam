@@ -1,6 +1,6 @@
-    Info<< "Creating twoPhaseSystem\n" << endl;
+    Info<< "Creating twoPhaseAbsorbingSystem\n" << endl;
 
-    twoPhaseSystem fluid(mesh, g);
+    twoPhaseAbsorbingSystem fluid(mesh, g);
 
     phaseModel& phase1 = fluid.phase1();
     phaseModel& phase2 = fluid.phase2();

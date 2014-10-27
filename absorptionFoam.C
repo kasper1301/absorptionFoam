@@ -31,7 +31,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "twoPhaseSystem.H"
+#include "twoPhaseAbsorbingSystem.H"
 #include "PhaseCompressibleTurbulenceModel.H"
 #include "pimpleControl.H"
 #include "IOMRFZoneList.H"
