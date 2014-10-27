@@ -34,6 +34,7 @@ License
 #include "mathematicalConstants.H"
 #include "fundamentalConstants.H"
 #include "addToRunTimeSelectionTable.H"
+#include "PhaseCompressibleTurbulenceModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -94,7 +95,38 @@ Foam::diameterModels::ADD::ADD
         dimless,
         diameterProperties_.lookup("m")
     ),
-    
+    C1_
+    (
+        "C1",
+        dimless,
+        diameterProperties_.lookup("C1")
+    ),
+    C2_
+    (
+        "C2",
+        dimLength,
+        diameterProperties_.lookup("C2")
+    ),
+    Cb_
+    (
+        "Cb",
+        dimless,
+        diameterProperties_.lookup("Cb")
+    ),
+    Cc_
+    (
+        "Cc",
+        dimless,
+        diameterProperties_.lookup("Cc")
+    ),
+    Cmu_
+    (
+        "Cmu",
+        dimless,
+        diameterProperties_.lookup("Cmu")
+    ),
+    Deff_(Deff()),
+    deq_(deq())
 {}
 
 
@@ -106,60 +138,43 @@ Foam::diameterModels::ADD::~ADD()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Placeholder for the nucleation/condensation model
-// Foam::tmp<Foam::volScalarField> Foam::diameterModels::IATE::Rph() const
-// {
-//     const volScalarField& T = phase_.thermo().T();
-//     const volScalarField& p = phase_.thermo().p();
-//
-//     scalar A, B, C, sigma, vm, Rph;
-//
-//     volScalarField ps(1e5*pow(10, A - B/(T + C)));
-//     volScalarField Dbc
-//     (
-//         4*sigma*vm/(constant::physicoChemical::k*T*log(p/ps))
-//     );
-//
-//     return constant::mathematical::pi*sqr(Dbc)*Rph;
-// }
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::ADD::Deff() const
+{
+    //- Phase fraction
+    const volScalarField& alpha = phase_;
+    //- Density of dispersed phase
+    const volScalarField& rhod = phase_.rho();
+    //- Density of continous phase
+    const volScalarField& rhoc = phase_.otherPhase().rho();
+    //- Turbulent viscosity
+    const volScalarField& mut = phase_.otherPhase().turbulence().mut();
+    
+    return alpha*rhod*mut/rhoc;
+}
+
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::ADD::deq() const
+{
+    //- Phase fraction
+    const volScalarField& alpha = phase_;
+    //- Density of continous phase
+    const volScalarField& rhoc = phase_.otherPhase().rho();
+    //- Viscosity of continous phase
+    const volScalarField& muc = phase_.otherPhase().turbulence().mu();
+    //- Viscosity of dispersed phase
+    const volScalarField& mud = phase_.turbulence().mu();
+    //- Turbulent dispersion
+    const volScalarField& epsilon = phase_.otherPhase().turbulence().epsilon();
+    
+    return C1_*pow(alpha,n_)*pow(sigma_/rhoc,0.6)*pow(mud/muc,m_)*epsilon + C2_;
+}
+
+
 
 void Foam::diameterModels::ADD::correct()
 {
-    // Initialise the accumulated source term to the dilatation effect
-    //~ volScalarField R
-    //~ (
-        //~ (
-            //~ (1.0/3.0)
-           //~ /max
-            //~ (
-                //~ fvc::average(phase_ + phase_.oldTime()),
-                //~ residualAlpha_
-            //~ )
-        //~ )
-       //~ *(fvc::ddt(phase_) + fvc::div(phase_.alphaPhi()))
-    //~ );
-//~ 
-    //~ // Accumulate the run-time selectable sources
-    //~ forAll(sources_, j)
-    //~ {
-        //~ R -= sources_[j].R();
-    //~ }
-//~ 
-    //~ // Construct the interfacial curvature equation
-    //~ fvScalarMatrix kappaiEqn
-    //~ (
-        //~ fvm::ddt(kappai_) + fvm::div(phase_.phi(), kappai_)
-      //~ - fvm::Sp(fvc::div(phase_.phi()), kappai_)
-     //~ ==
-      //~ - fvm::SuSp(R, kappai_)
-    //~ //+ Rph() // Omit the nucleation/condensation term
-    //~ );
-//~ 
-    //~ kappaiEqn.relax();
-    //~ kappaiEqn.solve();
-//~ 
-    //~ // Update the Sauter-mean diameter
-    //~ d_ = dsm();
+    Deff_ = Deff();
+    deq_ = deq();
+    
 }
 
 

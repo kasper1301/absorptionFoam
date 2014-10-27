@@ -98,10 +98,16 @@ class ADD
         
         //- Constant Cmu in turbulence model
         dimensionedScalar Cmu_;
+        
+        volScalarField Deff_;
+        
+        volScalarField deq_;
 
     // Private member functions
 
-        //~ tmp<volScalarField> dsm() const;
+        tmp<volScalarField> Deff() const;
+        
+        tmp<volScalarField> deq() const;
 
 
 public:
