@@ -69,7 +69,7 @@ class ADD
 {
     // Private data
 
-        //- The average dispersed diameter of the phase
+        //- The average dispersed diameter of the phase (Sauter-mean)
         volScalarField d_;
 
         //- Residual phase fraction
@@ -99,17 +99,30 @@ class ADD
         //- Constant Cmu in turbulence model
         dimensionedScalar Cmu_;
         
+        //- Maximum dispersed phase fraction
+        dimensionedScalar alphaMax_;
+        
+        //- Effective bubble diffusivity
         volScalarField Deff_;
         
+        //- Equilibrium diameter
         volScalarField deq_;
+        
+        //- Relaxation time
+        volScalarField tauRel_;
 
     // Private member functions
-
-        tmp<volScalarField> Deff() const;
+        //- Effective bubble diffusivity
+        void Deff();
         
-        tmp<volScalarField> deq() const;
+        //- Equilibrium diameter
+        void deq();
+        
+        //- Relaxation time
+        void tauRel();
 
-
+        tmp<volScalarField> tauB() const;
+        tmp<volScalarField> tauC() const;
 public:
 
     //- Runtime type information
