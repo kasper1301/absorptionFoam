@@ -72,11 +72,14 @@ class ADD
         //- The average dispersed diameter of the phase (Sauter-mean)
         volScalarField d_;
 
+        //- Maximum diameter
+        dimensionedScalar dMax_;
+        
+        //- Minimum diameter
+        dimensionedScalar dMin_;
+
         //- Residual phase fraction
         dimensionedScalar residualAlpha_;
-        
-        //- Surface tension
-        dimensionedScalar sigma_;
         
         //- Constant n in equilibrium diameter
         dimensionedScalar n_;
@@ -123,6 +126,7 @@ class ADD
 
         tmp<volScalarField> tauB() const;
         tmp<volScalarField> tauC() const;
+        tmp<volScalarField> tauK() const;
 public:
 
     //- Runtime type information

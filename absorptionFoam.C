@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         while (pimple.loop())
         {
             fluid.solve();
-            fluid.correct();
+            //~ fluid.correct();
 
             volScalarField contErr1
             (

@@ -503,7 +503,7 @@ void Foam::twoPhaseAbsorbingSystem::solve()
                     phase1_.alphaPhi() += alphaPhic10;
                 }
             }
-
+            
             phase1_.alphaPhi() /= nAlphaSubCycles;
         }
         else
@@ -550,6 +550,9 @@ void Foam::twoPhaseAbsorbingSystem::solve()
             << "  Min(alpha1) = " << min(alpha1).value()
             << "  Max(alpha1) = " << max(alpha1).value()
             << endl;
+        
+        correct();
+        
     }
 }
 

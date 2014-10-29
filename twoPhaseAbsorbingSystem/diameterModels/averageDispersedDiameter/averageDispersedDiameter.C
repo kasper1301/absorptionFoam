@@ -29,9 +29,6 @@ License
 #include "fvmDiv.H"
 #include "fvmSup.H"
 #include "fvmLaplacian.H"
-#include "fvcDdt.H"
-#include "fvcDiv.H"
-#include "fvcAverage.H"
 #include "mathematicalConstants.H"
 #include "fundamentalConstants.H"
 #include "addToRunTimeSelectionTable.H"
@@ -77,13 +74,24 @@ Foam::diameterModels::ADD::ADD
         ),
         phase_.U().mesh()
     ),
+    dMax_
+    (
+        "dMax",
+        dimLength,
+        diameterProperties_.lookup("dMax")
+    ),
+    dMin_
+    (
+        "dMin",
+        dimLength,
+        diameterProperties_.lookup("dMin")
+    ),
     residualAlpha_
     (
         "residualAlpha",
         dimless,
         diameterProperties_.lookup("residualAlpha")
     ),
-    sigma_(phase.fluid().sigma()),
     n_
     (
         "n",
@@ -128,7 +136,7 @@ Foam::diameterModels::ADD::ADD
     ),
     alphaMax_
     (
-        "Cmu",
+        "alphaMax",
         dimless,
         diameterProperties_.lookup("alphaMax")
     ),
@@ -141,7 +149,7 @@ Foam::diameterModels::ADD::ADD
             phase_.U().mesh()
         ),
         phase_.U().mesh(),
-        dimensionedScalar("zero", dimensionSet(0, 1, 0, 0, 0, 0, 0), 0.0)
+        dimensionedScalar("zero", dimensionSet(1, -1, -1, 0, 0, 0, 0), 0.0)
     ),
     deq_
     (
@@ -163,7 +171,7 @@ Foam::diameterModels::ADD::ADD
             phase_.U().mesh()
         ),
         phase_.U().mesh(),
-        dimensionedScalar("zero", dimensionSet(0, 0, -1, 0, 0, 0, 0), 0.0)
+        dimensionedScalar("zero", dimensionSet(0, 0, 1, 0, 0, 0, 0), 0.0)
     )
 {}
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -180,12 +188,10 @@ void Foam::diameterModels::ADD::Deff()
     const volScalarField& alpha = phase_;
     //- Density of dispersed phase
     const volScalarField& rhod = phase_.rho();
-    //- Density of continous phase
-    const volScalarField& rhoc = phase_.otherPhase().rho();
     //- Turbulent viscosity
-    const volScalarField& mut = phase_.otherPhase().turbulence().mut();
-    
-    Deff_ = alpha*rhod*mut/rhoc;
+    const volScalarField& nut = phase_.otherPhase().turbulence().nut();
+
+    Deff_ = nut*alpha*rhod;
 }
 
 void Foam::diameterModels::ADD::deq()
@@ -198,17 +204,18 @@ void Foam::diameterModels::ADD::deq()
     const volScalarField& muc = phase_.otherPhase().mu();
     //- Viscosity of dispersed phase
     const volScalarField& mud = phase_.mu();
+    //- Surface tension
+    const dimensionedScalar& sigma = phase_.fluid().sigma();
     //- Turbulent dispersion
     const volScalarField& epsilon = phase_.otherPhase().turbulence().epsilon();
 
-    deq_ = C1_*pow(alpha,n_)*pow(sigma_/rhoc,0.6)*pow(mud/muc,m_)*epsilon + C2_;
+    deq_ = C1_*pow(alpha,n_)*(pow(sigma/rhoc,0.6)/pow(epsilon,0.4))*
+        pow(mud/muc,m_) + C2_;
 }
 
 void Foam::diameterModels::ADD::tauRel()
 {
-    const volScalarField& nu = phase_.otherPhase().turbulence().nu();
-    const volScalarField& epsilon = phase_.otherPhase().turbulence().epsilon();
-    const volScalarField tauK = 6.0*sqrt(nu/epsilon);
+    const volScalarField tauKinetic = tauK();
     const volScalarField tauBreakUp = tauB();
     const volScalarField tauCoalescence = tauC();
     
@@ -223,8 +230,9 @@ void Foam::diameterModels::ADD::tauRel()
             tauRel_[celli] = tauCoalescence[celli];
         }
     }
+    tauRel_ = tauCoalescence;
     
-    tauRel_ = max(tauRel_, tauK);
+    tauRel_ = max(tauRel_, tauKinetic);
     
 }
 
@@ -255,11 +263,17 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModels::ADD::tauC() const
     const volScalarField uRMS = sqrt(2.0/3.0*kd);
     const volScalarField s = d_*cbrt
     (
-        constant::mathematical::pi/6.0*(alphaMax_ - alpha)/alpha
+        constant::mathematical::pi/6.0*(alphaMax_ - alpha)/
+        max(alpha, residualAlpha_)
     );
     return Cc_*s/uRMS;
-    
-    return tauL;
+}
+
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::ADD::tauK() const
+{
+    const volScalarField nu = phase_.otherPhase().turbulence().nu();
+    const volScalarField& epsilon = phase_.otherPhase().turbulence().epsilon();
+    return 6.0*sqrt(nu/epsilon);
 }
 
 void Foam::diameterModels::ADD::correct()
@@ -267,7 +281,7 @@ void Foam::diameterModels::ADD::correct()
     Deff();
     deq();
     tauRel();
-    
+
     const volScalarField& rho = phase_.rho();
     const surfaceScalarField rhoPhi = fvc::interpolate(rho)*phase_.phi();
     
@@ -289,6 +303,8 @@ void Foam::diameterModels::ADD::correct()
     
     dEqn.relax();
     dEqn.solve();
+    
+    d = max(dMin_,min(dMax_, d));
     
 }
 
