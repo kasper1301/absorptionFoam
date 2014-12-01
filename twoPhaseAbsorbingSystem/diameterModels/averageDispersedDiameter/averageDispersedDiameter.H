@@ -22,23 +22,21 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::diameterModels::IATE
+    Foam::diameterModels::ADD
 
 Description
-    IATE (Interfacial Area Transport Equation) bubble diameter model.
+    ADD (Averaged Dispersed Diameter) bubble diameter model.
 
-    Solves for the interfacial curvature per unit volume of the phase rather
-    than interfacial area per unit volume to avoid stability issues relating to
-    the consistency requirements between the phase fraction and interfacial area
-    per unit volume.  In every other respect this model is as presented in the
-    paper:
+    Solves a transport equation for the bubble diameter based on an equilbrium
+    diameter. 
 
     \verbatim
-        "Development of Interfacial Area Transport Equation"
-        M. Ishii,
-        S. Kim,
-        J Kelly,
-        Nuclear Engineering and Technology, Vol.37 No.6 December 2005
+        "A CFD Analysis  of the Air Entrainment Rate Due to a Plunging Steel Jet
+        Combining Mathematical Models for Dispersed and Separated Multiphase 
+        Flows"
+        H. Laux,
+        S. T. Johansen,
+        Fluid Flow Phenomena in Metals Processing: Proceedings of a Symposium
     \endverbatim
 
 SourceFiles

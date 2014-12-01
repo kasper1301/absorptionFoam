@@ -82,7 +82,28 @@ private:
 
         //-  Dilatation term
         volScalarField dgdt_;
-
+        
+        //- Absorption rate
+        volScalarField absorption_;
+        
+        //- Salting coefficient
+        dimensionedScalar ks_;
+        
+        //- Ionic strength of seawater
+        dimensionedScalar I_;
+        
+        //- Henry's law constant
+        dimensionedScalar kHe_;
+        
+        //- Molecular weight of methane
+        dimensionedScalar MCH4_;
+        
+        //- Molecular weight of air
+        dimensionedScalar Mair_;
+        
+        //- Molecular weight of seawater
+        dimensionedScalar Msw_;
+        
         //- Unordered phase pair
         autoPtr<phasePair> pair_;
 
@@ -138,6 +159,9 @@ public:
 
         //- Return the mixture density
         tmp<volScalarField> rho() const;
+        
+        //- Return the absorption
+        tmp<volScalarField> absorption() const;
 
         //- Return the mixture velocity
         tmp<volVectorField> U() const;

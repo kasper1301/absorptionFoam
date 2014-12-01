@@ -74,7 +74,6 @@ int main(int argc, char *argv[])
         while (pimple.loop())
         {
             fluid.solve();
-            //~ fluid.correct();
 
             volScalarField contErr1
             (
@@ -90,8 +89,7 @@ int main(int argc, char *argv[])
 
 
             #include "UEqns.H"
-            #include "omegaEqns.H"
-            //~ #include "EEqns.H"
+
             thermo1.correct();
             thermo2.correct();
             
