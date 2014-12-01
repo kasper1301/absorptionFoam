@@ -216,7 +216,6 @@
             (
                 alpha1*(pEqnComp2 & p)
               - alpha2*(pEqnComp1 & p)
-              - absorption/rho1
             );
 
             p.relax();

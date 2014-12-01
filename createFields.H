@@ -124,67 +124,67 @@
     volScalarField K2(IOobject::groupName("K", phase2.name()), 0.5*magSqr(U2));
 
     // Mass fraction in phase 1
-    volScalarField omega1
-    (
-        IOobject
-        (
-            IOobject::groupName("omega", phase1.name()),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        fluid.mesh()
-    );
-    // Mass fraction in phase 2
-    volScalarField omega2
-    (
-        IOobject
-        (
-            IOobject::groupName("omega", phase2.name()),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        fluid.mesh()
-    );
-
-    volScalarField absorption
-    (
-        IOobject
-        (
-            "absorption",
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("zero", dimensionSet(1, -3, -1, 0, 0, 0, 0), 0.0)
-    );
-    // Diffusion of methane in phase 1
-    dimensionedScalar D1
-    (
-        "diffusion1",
-        dimensionSet(0, 2, -1, 0, 0, 0, 0),
-        2.10e-5
-    );
-    // Diffusion of methane in phase 2
-    dimensionedScalar D2
-    (
-        "diffusion2",
-        dimensionSet(0, 2, -1, 0, 0, 0, 0),
-        1.84e-9
-    );
-    // Henry's constant for methane
-    dimensionedScalar kHe
-    (
-        "HenryConstant",
-        dimensionSet(1, -1, -2, 0, 0, 0, 0),
-        2.78e9
-    );
-    // Salting coefficient prefactor
-    scalar kSalt = 0.8085813391629726;
+    //~ volScalarField omega1
+    //~ (
+        //~ IOobject
+        //~ (
+            //~ IOobject::groupName("omega", phase1.name()),
+            //~ fluid.mesh().time().timeName(),
+            //~ fluid.mesh(),
+            //~ IOobject::MUST_READ,
+            //~ IOobject::AUTO_WRITE
+        //~ ),
+        //~ fluid.mesh()
+    //~ );
+    //~ // Mass fraction in phase 2
+    //~ volScalarField omega2
+    //~ (
+        //~ IOobject
+        //~ (
+            //~ IOobject::groupName("omega", phase2.name()),
+            //~ fluid.mesh().time().timeName(),
+            //~ fluid.mesh(),
+            //~ IOobject::MUST_READ,
+            //~ IOobject::AUTO_WRITE
+        //~ ),
+        //~ fluid.mesh()
+    //~ );
+//~ 
+    //~ volScalarField absorption
+    //~ (
+        //~ IOobject
+        //~ (
+            //~ "absorption",
+            //~ fluid.mesh().time().timeName(),
+            //~ fluid.mesh(),
+            //~ IOobject::NO_READ,
+            //~ IOobject::AUTO_WRITE
+        //~ ),
+        //~ mesh,
+        //~ dimensionedScalar("zero", dimensionSet(1, -3, -1, 0, 0, 0, 0), 0.0)
+    //~ );
+    //~ // Diffusion of methane in phase 1
+    //~ dimensionedScalar D1
+    //~ (
+        //~ "diffusion1",
+        //~ dimensionSet(0, 2, -1, 0, 0, 0, 0),
+        //~ 2.10e-5
+    //~ );
+    //~ // Diffusion of methane in phase 2
+    //~ dimensionedScalar D2
+    //~ (
+        //~ "diffusion2",
+        //~ dimensionSet(0, 2, -1, 0, 0, 0, 0),
+        //~ 1.84e-9
+    //~ );
+    //~ // Henry's constant for methane
+    //~ dimensionedScalar kHe
+    //~ (
+        //~ "HenryConstant",
+        //~ dimensionSet(1, -1, -2, 0, 0, 0, 0),
+        //~ 2.78e9
+    //~ );
+    //~ // Salting coefficient prefactor
+    //~ scalar kSalt = 0.8085813391629726;
 
     

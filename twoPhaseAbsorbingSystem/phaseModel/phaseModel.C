@@ -98,6 +98,30 @@ Foam::phaseModel::phaseModel
         ),
         fluid.mesh(),
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0)
+    ),
+    wCH4_
+    (
+        IOobject
+        (
+            IOobject::groupName("wCH4", name_),
+            fluid.mesh().time().timeName(),
+            fluid.mesh(),
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        fluid.mesh()
+    ),
+    DCH4_
+    (
+        "DCH4",
+        dimensionSet(0, 2, -1, 0, 0),
+        phaseDict_.lookup("DCH4")
+    ),
+    MR_
+    (
+        "MR",
+        dimless,
+        phaseDict_.lookup("MR")
     )
 {
     thermo_->validate("phaseModel " + name_, "h", "e");

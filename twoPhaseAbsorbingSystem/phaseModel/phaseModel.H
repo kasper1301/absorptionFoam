@@ -95,7 +95,15 @@ class phaseModel
         //- turbulence model
         autoPtr<PhaseCompressibleTurbulenceModel<phaseModel> > turbulence_;
 
-
+        //- Mass fraction of methane
+        volScalarField wCH4_;
+        
+        //- Diffusivity of methane 
+        dimensionedScalar DCH4_;
+        
+        //- Molecular weight ratio 
+        dimensionedScalar MR_;
+        
 public:
 
     // Constructors
@@ -200,7 +208,7 @@ public:
         //- Return the density
         const volScalarField& rho() const
         {
-            return thermo_->rho();
+            return thermo_->rho()/(1.0 + (MR_ - 1.0)*wCH4_);
         }
 
         //- Return the velocity
@@ -250,6 +258,25 @@ public:
         surfaceScalarField& alphaRhoPhi()
         {
             return alphaRhoPhi_;
+        }
+        
+        //- Return the mass fraction of methane
+        const volScalarField& wCH4() const
+        {
+            return wCH4_;
+        }
+        
+        //- Return the diffusivity of methane
+        const dimensionedScalar& DCH4() const
+        {
+            return DCH4_;
+        }
+        
+        //- Return non-const access to the mass fraction of methane
+        //- Used by twoPhaseAbsorbingSystem
+        volScalarField& wCH4()
+        {
+            return wCH4_;
         }
 
         //- Correct the phase properties

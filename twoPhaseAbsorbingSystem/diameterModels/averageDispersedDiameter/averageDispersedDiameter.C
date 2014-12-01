@@ -247,26 +247,20 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModels::ADD::tauC() const
 {
     //- Phase fraction
     const volScalarField& alpha = phase_;
-    //- Density of dispersed phase
-    const volScalarField& rho = phase_.rho();
-    //- Viscosity of continous phase
-    const volScalarField& mu = phase_.otherPhase().mu();
     //- Turbulent kinetic energy
-    const volScalarField& k = phase_.otherPhase().turbulence().k();
-    //- Turbulent dispersion
-    const volScalarField& epsilon = phase_.otherPhase().turbulence().epsilon();
-    
-    const volScalarField tauL = 1.5*Cmu_*k/epsilon;
-    const volScalarField tauP = rho*sqr(d_)/(18*mu);
-    const volScalarField St = tauP/tauL;
-    const volScalarField kd = k/(1 + St);
-    const volScalarField uRMS = sqrt(2.0/3.0*kd);
-    const volScalarField s = d_*cbrt
+    const volScalarField& k = phase_.turbulence().k();
+
+    return
+    Cc_*
     (
-        constant::mathematical::pi/6.0*(alphaMax_ - alpha)/
-        max(alpha, residualAlpha_)
+        cbrt
+        (
+            constant::mathematical::pi/6.0
+           *(alphaMax_ - alpha)/
+            max(alpha,SMALL)
+        )
+       *d_/sqrt(2.0/3.0*k)
     );
-    return Cc_*s/uRMS;
 }
 
 Foam::tmp<Foam::volScalarField> Foam::diameterModels::ADD::tauK() const
@@ -283,7 +277,9 @@ void Foam::diameterModels::ADD::correct()
     tauRel();
 
     const volScalarField& rho = phase_.rho();
-    const surfaceScalarField rhoPhi = fvc::interpolate(rho)*phase_.phi();
+    const volScalarField& alpha = phase_;
+    const surfaceScalarField& alphaRhoPhi = phase_.alphaRhoPhi();
+    const volScalarField alphaRho = rho*alpha;
     
     volScalarField& d = d_;
 
@@ -293,12 +289,12 @@ void Foam::diameterModels::ADD::correct()
     
     fvScalarMatrix dEqn
     (
-        fvm::ddt(rho, d)
-      + fvm::div(rhoPhi, d) 
+        fvm::ddt(alpha, rho, d)
+      + fvm::div(alphaRhoPhi, d) 
         ==
         fvm::laplacian(Deff, d)
-      - fvm::Sp(rho/tauR, d)
-      + rho/tauR*deq
+      - fvm::Sp(alphaRho/tauR, d)
+      + alphaRho/tauR*deq
     );
     
     dEqn.relax();
