@@ -126,6 +126,20 @@ Foam::twoPhaseAbsorbingSystem::twoPhaseAbsorbingSystem
         dimensionedScalar("absorption", dimensionSet(1, -3, -1, 0, 0), 0)
     ),
     
+    wCH4sat_
+    (
+        IOobject
+        (
+            "wCH4sat",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("wCH4sat", dimless, 0)
+    ),
+    
     ks_
     (
         "ks",
@@ -341,41 +355,48 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseAbsorbingSystem::rho() const
     return phase1_*phase1_.thermo().rho() + phase2_*phase2_.thermo().rho();
 }
 
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseAbsorbingSystem::absorption() const
+void Foam::twoPhaseAbsorbingSystem::updateAbsorption()
 {
     const volScalarField& alpha1 = phase1_;
-    const volScalarField& d1 = phase1_.d();
     const volScalarField& wCH4_1 = phase1_.wCH4();
-    
+
     const volScalarField& rho2 = phase2_.thermo().rho();
     const volScalarField& wCH4_2 = phase2_.wCH4();
     const dimensionedScalar& DCH4_2 = phase2_.DCH4();
-    
+
     const volScalarField& p = phase1_.thermo().p();
-    
-    volScalarField Pe = d1*pair_->magUr()/DCH4_2;
-    volScalarField Re = pair_->Re();
-    
+
+    volScalarField magUr = mag(phase1_.U() - phase2_.U());
+
+    volScalarField Pe = phase1_.d()*magUr/DCH4_2;
+
+    volScalarField Re = phase1_.d()*magUr/phase2_.nu();
+
     volScalarField kCH4
     (
-        (1.0 + cbrt(1.0+Pe)*(1.0+0.096*cbrt(Re)/(1.0+7.0/sqr(Re))))
-      * (DCH4_2/d1)
+        (
+            1.0 + cbrt(1.0+Pe)
+          * (
+                1.0+0.096*cbrt(Re)/(1.0+7.0/sqr(max(Re,SMALL)))
+            )
+        )
+      * (DCH4_2/phase1_.d())
     );
-    
-    volScalarField a(6.0*alpha1/d1);
-    
-    volScalarField xCH4_1(wCH4_1/MCH4_ /(wCH4_1/MCH4_ + (1.0-wCH4_1)/Mair_));
-    
-    volScalarField xCH4_0(xCH4_1*p/kHe_);
-    
-    volScalarField xCH4sat(xCH4_0*exp(I_*ks_));
-    
-    volScalarField wCH4sat
+
+    volScalarField a(6.0*alpha1/phase1_.d());
+
+    volScalarField xCH4_1
     (
-        xCH4sat*MCH4_/(xCH4sat*MCH4_ + (1-xCH4sat*Msw_))
+        wCH4_1/MCH4_ /(wCH4_1/MCH4_ + (1.0-wCH4_1)/Mair_)
     );
-    
-    return a*kCH4*rho2*(wCH4sat - wCH4_2);
+
+    volScalarField xCH4_0(xCH4_1*p/kHe_);
+
+    volScalarField xCH4sat(xCH4_0*exp(I_*ks_));
+
+    wCH4sat_ = xCH4sat*MCH4_/(xCH4sat*MCH4_ + (1-xCH4sat*Msw_));
+
+    absorption_ = a*kCH4*rho2*(wCH4sat_ - wCH4_2);
 }
 
 Foam::tmp<Foam::volVectorField> Foam::twoPhaseAbsorbingSystem::U() const
@@ -436,13 +457,6 @@ void Foam::twoPhaseAbsorbingSystem::solve()
 
     volScalarField& alpha1 = phase1_;
     volScalarField& alpha2 = phase2_;
-    
-    volScalarField& wCH4_1 = phase1_.wCH4();
-    volScalarField& wCH4_2 = phase2_.wCH4();
-    const dimensionedScalar& DCH4_1 = phase1_.DCH4();
-    const dimensionedScalar& DCH4_2 = phase2_.DCH4();
-    
-    absorption_ = absorption();
 
     const surfaceScalarField& phi1 = phase1_.phi();
     const surfaceScalarField& phi2 = phase2_.phi();
@@ -520,7 +534,7 @@ void Foam::twoPhaseAbsorbingSystem::solve()
             ),
             // Divergence term is handled explicitly to be
             // consistent with the explicit transport solution
-            fvc::div(phi_)*min(alpha1, scalar(1)) + absorption_
+            fvc::div(phi_)*min(alpha1, scalar(1))
         );
 
         forAll(dgdt_, celli)
@@ -651,41 +665,67 @@ void Foam::twoPhaseAbsorbingSystem::solve()
             << "  Min(alpha1) = " << min(alpha1).value()
             << "  Max(alpha1) = " << max(alpha1).value()
             << endl;
-        
-        // Gas phase
-        fvScalarMatrix wCH4_1Eqn
-        (
-            fvm::ddt(alpha1, phase1_.rho(), wCH4_1)
-          + fvm::div(phase1_.alphaRhoPhi(), wCH4_1)
-          ==
-            fvm::laplacian(alpha1*phase1_.rho()*DCH4_1, wCH4_1)
-          - absorption_
-        );
-        
-        wCH4_1Eqn.relax();
-        wCH4_1Eqn.solve();
-        
-        // Liquid phase
-        fvScalarMatrix wCH4_2Eqn
-        (
-            fvm::ddt(alpha2, phase2_.rho(), wCH4_2)
-          + fvm::div(phase2_.alphaRhoPhi(), wCH4_2)
-          ==
-            fvm::laplacian(alpha2*phase2_.rho()*DCH4_2, wCH4_2)
-          + absorption_
-        );
-        
-        wCH4_2Eqn.relax();
-        wCH4_2Eqn.solve();
-        
+            
         correct();
-        
+            
     }
+    
 }
+
 
 
 void Foam::twoPhaseAbsorbingSystem::correct()
 {
+    const volScalarField& alpha1 = phase1_;
+    const volScalarField& alpha2 = phase2_;
+    volScalarField& wCH4_1 = phase1_.wCH4();
+    volScalarField& wCH4_2 = phase2_.wCH4();
+    const dimensionedScalar& DCH4_1 = phase1_.DCH4();
+    const dimensionedScalar& DCH4_2 = phase2_.DCH4();
+    
+    volScalarField wCH4_1old(wCH4_1);
+    
+    // Gas phase
+    fvScalarMatrix wCH4_1Eqn
+    (
+        fvm::ddt(alpha1, phase1_.rho(), wCH4_1)
+      + fvm::div(phase1_.alphaRhoPhi(), wCH4_1)
+      ==
+        fvm::laplacian(alpha1*phase1_.rho()*DCH4_1, wCH4_1)
+      - absorption_
+    );
+    
+    wCH4_1Eqn.relax();
+    wCH4_1Eqn.solve();
+    wCH4_1 = max(0.0, min(1.0, wCH4_1));
+    
+    phase1_.correctRho(wCH4_1old, Mair_);
+    
+    Info<< wCH4_1.name() 
+        << "  Min(wCH4) = " << min(wCH4_1).value()
+        << "  Max(wCH4) = " << max(wCH4_1).value()
+        << endl;
+        
+    // Liquid phase
+    fvScalarMatrix wCH4_2Eqn
+    (
+        fvm::ddt(alpha2, phase2_.rho(), wCH4_2)
+      + fvm::div(phase2_.alphaRhoPhi(), wCH4_2)
+      ==
+        fvm::laplacian(alpha2*phase2_.rho()*DCH4_2, wCH4_2)
+      + absorption_
+    );
+    
+    wCH4_2Eqn.relax();
+    wCH4_2Eqn.solve();
+    wCH4_2 = max(0.0, min(wCH4sat_, wCH4_2));
+    
+    Info<< wCH4_2.name() 
+        << "  Min(wCH4) = " << min(wCH4_2).value()
+        << "  Max(wCH4) = " << max(wCH4_2).value()
+        << endl;
+    
+    updateAbsorption();
     phase1_.correct();
     phase2_.correct();
 }

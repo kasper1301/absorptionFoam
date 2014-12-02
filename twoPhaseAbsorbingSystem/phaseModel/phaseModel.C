@@ -77,6 +77,10 @@ Foam::phaseModel::phaseModel
         ),
         fluid.mesh()
     ),
+    psi_
+    (
+        thermo_().psi()
+    ),
     alphaPhi_
     (
         IOobject
@@ -213,6 +217,9 @@ Foam::phaseModel::phaseModel
             phi(),
             *this
         );
+        
+    thermo_().rho() /= (1.0 + (MR_ - 1.0)*wCH4_);
+    psi_ /= (1.0 + (MR_ - 1.0)*wCH4_);
 }
 
 
@@ -250,6 +257,30 @@ Foam::phaseModel::turbulence() const
 void Foam::phaseModel::correct()
 {
     return dPtr_->correct();
+}
+
+void Foam::phaseModel::correctRho
+(
+    const volScalarField& wCH4_old,
+    const dimensionedScalar& Mw
+)
+{
+    dimensionedScalar R
+    (
+        "R",
+        dimensionSet(0, 2, -2, -1, 0),
+        8.3145
+    );
+    
+    volScalarField dpsidw = 
+    (
+        Mw*(1.0 - MR_)/(sqr(1.0 + (MR_ - 1.0)*wCH4_old))
+      / (R*thermo_().T())
+    );
+    
+    psi_ += dpsidw*(wCH4_ - wCH4_old);
+    
+    thermo_().rho() += dpsidw*thermo_().p()*(wCH4_ - wCH4_old);
 }
 
 bool Foam::phaseModel::read(const dictionary& phaseProperties)

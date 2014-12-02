@@ -79,6 +79,9 @@ class phaseModel
 
         //- Velocity
         volVectorField U_;
+        
+        //- Derivative of density wrt pressure
+        volScalarField psi_;
 
         //- Volumetric flux of the phase
         surfaceScalarField alphaPhi_;
@@ -208,9 +211,9 @@ public:
         //- Return the density
         const volScalarField& rho() const
         {
-            return thermo_->rho()/(1.0 + (MR_ - 1.0)*wCH4_);
+            return thermo_->rho();
         }
-
+        
         //- Return the velocity
         const volVectorField& U() const
         {
@@ -278,11 +281,23 @@ public:
         {
             return wCH4_;
         }
+        
+        //- Return the derivative of density wtr pressure
+        const volScalarField& psi() const
+        {
+            return psi_;
+        }
 
         //- Correct the phase properties
         //  other than the thermodynamics and turbulence
         //  which have special treatment
         void correct();
+        
+        void correctRho
+        (
+            const volScalarField& wCH4_old, 
+            const dimensionedScalar& Mw
+        );
 
         //- Read phaseProperties dictionary
         virtual bool read(const dictionary& phaseProperties);

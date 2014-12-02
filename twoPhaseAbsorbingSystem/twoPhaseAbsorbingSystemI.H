@@ -94,5 +94,10 @@ inline Foam::volScalarField& Foam::twoPhaseAbsorbingSystem::dgdt()
     return dgdt_;
 }
 
+inline const Foam::volScalarField& Foam::twoPhaseAbsorbingSystem::absorption() const
+{
+    return absorption_;
+}
+
 
 // ************************************************************************* //

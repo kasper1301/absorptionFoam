@@ -86,6 +86,9 @@ private:
         //- Absorption rate
         volScalarField absorption_;
         
+        //- Saturation mass fraction
+        volScalarField wCH4sat_;
+        
         //- Salting coefficient
         dimensionedScalar ks_;
         
@@ -156,12 +159,12 @@ public:
 
 
     // Member Functions
+    
+        //- Update the absorption
+        void updateAbsorption();
 
         //- Return the mixture density
         tmp<volScalarField> rho() const;
-        
-        //- Return the absorption
-        tmp<volScalarField> absorption() const;
 
         //- Return the mixture velocity
         tmp<volVectorField> U() const;
@@ -236,6 +239,9 @@ public:
 
             //- Return non-const access to the dilatation parameter
             inline volScalarField& dgdt();
+            
+            //- Return the absorption
+            inline const volScalarField& absorption() const;
 };
 
 

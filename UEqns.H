@@ -5,7 +5,7 @@ mrfZones.correctBoundaryVelocity(U);
 fvVectorMatrix U1Eqn(U1, rho1.dimensions()*U1.dimensions()*dimVol/dimTime);
 fvVectorMatrix U2Eqn(U2, rho2.dimensions()*U2.dimensions()*dimVol/dimTime);
 
-volScalarField absorption(fluid.absorption());
+const volScalarField& absorption(fluid.absorption());
 
 volScalarField dragCoeff(fluid.dragCoeff());
 
