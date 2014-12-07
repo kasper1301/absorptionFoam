@@ -25,8 +25,8 @@ Application
     twoPhaseEulerFoam
 
 Description
-    Solver for a system of 2 compressible fluid phases with one phase
-    dispersed, e.g. gas bubbles in a liquid including heat-transfer.
+    Solver for a system of seawater, air and methane. The methane is absorbed
+    by the seawater.
 
 \*---------------------------------------------------------------------------*/
 
